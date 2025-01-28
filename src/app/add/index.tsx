@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import {View, Text, TouchableOpacity, Alert} from 'react-native';
+import { View, Text, TouchableOpacity, Alert} from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 import { styles } from './styles';
 import { colors } from '@/src/styles/colors';
+import { linkStorage } from '@/src/storage/link-storage';
 
 import { Categories } from '@/src/components/categories';
 import { Input } from '@/src/components/input';
@@ -18,7 +19,8 @@ export default function Add() {
     const [url, setUrl] = useState("")
 
 
-    function handleAdd() {
+    async function handleAdd() {
+        try {
         if(!category) {
             return Alert.alert("Selecione uma categoria")
         }
@@ -29,13 +31,29 @@ export default function Add() {
         }
 
         if (!url.trim()) {
-            alert("Preencha todos o campo URL")
+            alert("Preencha o campo URL")
             return
         }
-        
-        alert("Adicionado com sucesso")
 
+        await linkStorage.save({
+            id: new Date().getTime().toString(),
+            name,
+            url,
+            category
+        })
+
+        Alert.alert("Sucesso", "Novo link adicionado", [
+            {
+                text: "Ok",
+                onPress: () => router.back()
+            }
+        ])
+
+    } catch (error) {
+        Alert.alert("Erro", "Não foi possível salvar o link")
+        console.log(error)
     }
+}
 
 
     return (
@@ -49,7 +67,7 @@ export default function Add() {
             <Text style={styles.label}>Selecione uma categoria</Text>
             <Categories onChange={setCategory} selected={category}/>
             <View style={styles.form}>
-                <Input placeholder="Nome" onChangeText={setName} autoCorrect={false}/>
+                <Input placeholder="Nome" onChangeText={setName} autoCorrect={false} autoCapitalize="none"/>
                 <Input placeholder="URL" onChangeText={setUrl} autoCorrect={false}/>
                 <Button title="Adicionar" onPress={handleAdd} />
             </View>
